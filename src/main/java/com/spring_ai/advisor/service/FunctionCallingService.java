@@ -1,6 +1,7 @@
 package com.spring_ai.advisor.service;
 import com.spring_ai.advisor.config.FunctionConfig;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,10 @@ public class FunctionCallingService {
 
         return chatClient
                 .prompt()
+                .advisors(a -> a.param(
+                        ChatMemory.CONVERSATION_ID,
+                        "support-chat-1"
+                ))
                 .options(OpenAiChatOptions.builder()
                         .model(model)
                         .build())
@@ -43,6 +48,10 @@ public class FunctionCallingService {
 
         return chatClient
                 .prompt()
+                .advisors(a -> a.param(
+                        ChatMemory.CONVERSATION_ID,
+                        "support-chat-1"
+                ))
                 .options(OpenAiChatOptions.builder()
                         .model(model)
                         .build())
