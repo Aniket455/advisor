@@ -1,5 +1,6 @@
 package com.spring_ai.advisor.config;
 
+import com.spring_ai.advisor.advisor.PiiRedactionAdvisor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
@@ -34,7 +35,9 @@ public class MultiModelConfig {
     public ChatClient openAIChatClient(OpenAiChatModel openAiChatModel, ChatMemory chatMemory){
         ChatClient.Builder builder =ChatClient.builder(openAiChatModel);
 
-        builder.defaultAdvisors(new SimpleLoggerAdvisor(),
+        builder.defaultAdvisors(
+                new PiiRedactionAdvisor(),
+                new SimpleLoggerAdvisor(),
                 MessageChatMemoryAdvisor.builder(chatMemory).build()
         );// log request and response for debugging
         ChatClient client = builder.build();
@@ -58,7 +61,9 @@ public class MultiModelConfig {
                 .build();
 
         return ChatClient.builder(geminiModel)
-                .defaultAdvisors(new SimpleLoggerAdvisor(),
+                .defaultAdvisors(
+                        new PiiRedactionAdvisor(),
+                        new SimpleLoggerAdvisor(),
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
                 ) // log request and response for debugging
                 .build();
