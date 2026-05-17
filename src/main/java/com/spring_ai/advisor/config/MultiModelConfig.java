@@ -1,6 +1,10 @@
 package com.spring_ai.advisor.config;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -19,24 +23,44 @@ public class MultiModelConfig {
     private String completionPath;
     @Value("${gemini.api.model.name}")
     private String geminiModelName;
+    @Bean
+    public ChatMemory chatMemory(){
+        return MessageWindowChatMemory.builder().maxMessages(10).build();
+    }
 
 
     @Bean("openaiChatClient")
     @Primary
-    public ChatClient openAIChatClient(OpenAiChatModel openAiChatModel){
-        ChatClient client =ChatClient.create(openAiChatModel);
+    public ChatClient openAIChatClient(OpenAiChatModel openAiChatModel, ChatMemory chatMemory){
+        ChatClient.Builder builder =ChatClient.builder(openAiChatModel);
+
+        builder.defaultAdvisors(new SimpleLoggerAdvisor(),
+                MessageChatMemoryAdvisor.builder(chatMemory).build()
+        );// log request and response for debugging
+        ChatClient client = builder.build();
         return client;
     }
 
     @Bean("geminiChatClient")
-    public ChatClient geminiChatClient(OpenAiChatModel openAiChatModel){
-        OpenAiApi geminiApi= OpenAiApi.builder().baseUrl(gmeiniUrl).completionsPath(completionPath).apiKey(geminiKey).build();
+    public ChatClient geminiChatClient( ChatMemory chatMemory) {
+        OpenAiApi geminiApi = OpenAiApi.builder()
+                .baseUrl(gmeiniUrl)
+                .completionsPath(completionPath)
+                .apiKey(geminiKey)
+                .build();
+
         OpenAiChatModel geminiModel = OpenAiChatModel.builder()
                 .openAiApi(geminiApi)
                 .defaultOptions(OpenAiChatOptions.builder()
-                .model(geminiModelName)
-                        .temperature(1.0).build()).build();
-        ChatClient client = ChatClient.create(geminiModel);
-        return client;
+                        .model(geminiModelName)
+                        .temperature(1.0)
+                        .build())
+                .build();
+
+        return ChatClient.builder(geminiModel)
+                .defaultAdvisors(new SimpleLoggerAdvisor(),
+                        MessageChatMemoryAdvisor.builder(chatMemory).build()
+                ) // log request and response for debugging
+                .build();
     }
 }
